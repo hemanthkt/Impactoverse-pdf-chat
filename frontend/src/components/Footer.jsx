@@ -1,6 +1,6 @@
 import React from 'react'
 
-const UploadPdf = () => {
+const Footer = () => {
   return (
     <div>
       
@@ -8,4 +8,4 @@ const UploadPdf = () => {
   )
 }
 
-export default UploadPdf
+export default Footer
