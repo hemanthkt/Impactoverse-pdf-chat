@@ -1,18 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 const ChatSection = () => {
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
   const [chat, setChat] = useState([]);
   const [pdfFile, setPdfFile] = useState(null);
+  const [parsedContent, setParsedContent] = useState("");
+
+  //Handle parsed data
+  const handleParsePdf = async () => {
+    if (!pdfFile) {
+      alert("Please upload a pdf");
+      return;
+    }
+    const formData = new FormData();
+    formData.append("file", pdfFile);
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/upload-pdf", {
+        method: "POST",
+        body: formData,
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Falied to parse PDF");
+      }
+      const data = await response.json();
+      console.log("Received data", data);
+      setParsedContent(data.parsed_content);
+      console.log(parsedContent);
+    } catch (error) {
+      alert(`Error: ${error.message}`);
+    }
+  };
 
   // Handle file upload
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
-    if (file && file.type === 'application/pdf') {
+    if (file && file.type === "application/pdf") {
       setPdfFile(file);
-      console.log('PDF uploaded:', file.name);
+      console.log("PDF uploaded:", file.name);
     } else {
-      alert('Please upload a valid PDF file');
+      alert("Please upload a valid PDF file");
     }
   };
 
@@ -20,11 +48,11 @@ const ChatSection = () => {
   const handleDrop = (e) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
-    if (file && file.type === 'application/pdf') {
+    if (file && file.type === "application/pdf") {
       setPdfFile(file);
-      console.log('PDF uploaded via drag and drop:', file.name);
+      console.log("PDF uploaded via drag and drop:", file.name);
     } else {
-      alert('Please upload a valid PDF file');
+      alert("Please upload a valid PDF file");
     }
   };
 
@@ -35,13 +63,13 @@ const ChatSection = () => {
   const handleSendMessage = () => {
     if (message.trim()) {
       setChat([...chat, { text: message }]);
-      setMessage('');
+      setMessage("");
     }
   };
 
   // Function to handle text area auto-resize
   const handleTextareaResize = (e) => {
-    e.target.style.height = 'auto'; // Reset height to auto before resizing
+    e.target.style.height = "auto"; // Reset height to auto before resizing
     e.target.style.height = `${e.target.scrollHeight}px`; // Adjust height based on scroll height
   };
 
@@ -62,6 +90,12 @@ const ChatSection = () => {
         >
           Click to upload PDF
         </label>
+        <button
+          className="mx-5 cursor-pointer text-blue-500 hover:underline"
+          onClick={handleParsePdf}
+        >
+          Parse PDF
+        </button>
         <input
           id="file-upload"
           type="file"
@@ -70,15 +104,21 @@ const ChatSection = () => {
           className="hidden"
         />
         {pdfFile && (
-          <p className="mt-2 text-sm text-gray-600">Uploaded PDF: {pdfFile.name}</p>
+          <p className="mt-2 text-sm text-gray-600">
+            Uploaded PDF: {pdfFile.name}
+          </p>
         )}
       </div>
 
       {/* Chat Box */}
       <div className="chat-box bg-gray-100 p-4 mb-4 border border-gray-300 rounded-lg max-h-[300px] overflow-y-auto">
         {chat.map((msg, index) => (
-          <div key={index} className="p-2 bg-white mb-2 rounded overflow-y-auto shadow-sm">
-            <p className="whitespace-pre-wrap">{msg.text}</p> {/* Added whitespace-pre-wrap */}
+          <div
+            key={index}
+            className="p-2 bg-white mb-2 rounded overflow-y-auto shadow-sm"
+          >
+            <p className="whitespace-pre-wrap">{msg.text}</p>{" "}
+            {/* Added whitespace-pre-wrap */}
           </div>
         ))}
       </div>
