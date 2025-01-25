@@ -60,9 +60,25 @@ const ChatSection = () => {
     setMessage(e.target.value);
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (message.trim()) {
-      setChat([...chat, { text: message }]);
+      setChat((prev) => [...prev, { text: message, sender: "user" }]);
+      try {
+        const response = await fetch("http://127.0.0.1:8000/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            question: message,
+            context: parsedContent,
+          }),
+        });
+        if (!response.ok) throw new Error("Failed to get answer");
+
+        const data = await response.json();
+        setChat((prev) => [...prev, { text: data.answer, sender: "ai" }]);
+      } catch (error) {
+        alert(`Error: ${error.message}`);
+      }
       setMessage("");
     }
   };
@@ -122,6 +138,19 @@ const ChatSection = () => {
           </div>
         ))}
       </div>
+
+      {chat.map((msg, index) => (
+        <div
+          key={index}
+          className={`p-2 mb-2 rounded ${
+            msg.sender === "user"
+              ? "bg-blue-100 ml-auto"
+              : "bg-gray-100 mr-auto"
+          }`}
+        >
+          <p className="whitespace-pre-wrap">{msg.text}</p>
+        </div>
+      ))}
 
       {/* Input Section */}
       <div className="input-section flex flex-col sm:flex-row sm:items-center">

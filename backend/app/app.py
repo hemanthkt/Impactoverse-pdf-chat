@@ -1,13 +1,22 @@
 from docling.document_converter import DocumentConverter
 from fastapi import FastAPI,UploadFile,File, HTTPException
 from fastapi.responses import JSONResponse
+from openai import OpenAI
 import os
 import shutil
 from fastapi.middleware.cors import CORSMiddleware
 import sys
 import time
 print(sys.executable)
+from dotenv import load_dotenv
+from pydantic import BaseModel
+import requests
+import os
 
+
+
+load_dotenv()
+print(os.getenv("DEEPSEEK_API_KEY"))
 app = FastAPI()
 
 app.add_middleware(
@@ -65,3 +74,33 @@ async def upload_pdf(file: UploadFile = File(...)):
             except:
                 print(f"Warning: could not delete temporary file{temp_file_path}")
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+client = OpenAI(
+    api_key=os.getenv('DEEPSEEK_API_KEY'),
+    base_url="https://api.deepseek.com"
+)
+
+class QuestionRequest(BaseModel):
+    question: str
+    context: str
+
+@app.post("/ask")
+async def ask_question(request: QuestionRequest):
+    try:
+
+        context = request.context[:4000] if len(request.context) > 4000 else request.context
+        
+        messages = [
+            {"role":"user","content":f"Based on this document: {context}\n\nQuestion:{request.question}\nAnswer"}
+        ]
+
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=messages
+        )
+
+        return{"answer": response.choices[0].message.content}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+        
