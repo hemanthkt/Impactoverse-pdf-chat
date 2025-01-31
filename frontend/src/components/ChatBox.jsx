@@ -4,8 +4,8 @@ const ChatSection = () => {
   const [message, setMessage] = useState("");
   const [chat, setChat] = useState([]);
   const [pdfFile, setPdfFile] = useState(null);
-  const [parsedContent, setParsedContent] = useState("");
-
+  // const [parsedContent, setParsedContent] = useState("");
+  const [documentId, setDocumentId] = useState(null);
   //Handle parsed data
   const handleParsePdf = async () => {
     if (!pdfFile) {
@@ -25,9 +25,9 @@ const ChatSection = () => {
         throw new Error(errorData.detail || "Falied to parse PDF");
       }
       const data = await response.json();
-      console.log("Received data", data);
-      setParsedContent(data.parsed_content);
-      console.log(parsedContent);
+      console.log("document od recieved", data.document_id);
+      setDocumentId(data.document_id);
+      alert("PDF processed successfully");
     } catch (error) {
       alert(`Error: ${error.message}`);
     }
@@ -69,7 +69,7 @@ const ChatSection = () => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             question: message,
-            context: parsedContent,
+            document_id: documentId,
           }),
         });
         if (!response.ok) throw new Error("Failed to get answer");
@@ -124,19 +124,6 @@ const ChatSection = () => {
             Uploaded PDF: {pdfFile.name}
           </p>
         )}
-      </div>
-
-      {/* Chat Box */}
-      <div className="chat-box bg-gray-100 p-4 mb-4 border border-gray-300 rounded-lg max-h-[300px] overflow-y-auto">
-        {chat.map((msg, index) => (
-          <div
-            key={index}
-            className="p-2 bg-white mb-2 rounded overflow-y-auto shadow-sm"
-          >
-            <p className="whitespace-pre-wrap">{msg.text}</p>{" "}
-            {/* Added whitespace-pre-wrap */}
-          </div>
-        ))}
       </div>
 
       {chat.map((msg, index) => (
